@@ -20,6 +20,17 @@ enum Type {
 }
 
 const SCENE := "Fruit.tscn"
+const FACE_ATLAS := preload("res://Game/Personal/face-atlas.png")
+const FACE_FONT := preload("res://Menu/Theme/LilitaOne-Regular-NotoSans-Black.ttf")
+const FACE_CELL_SIZE := 512.0
+const FACE_CELLS := [Vector2(0, 0), Vector2(1, 0), Vector2(2, 0), Vector2(0, 1), Vector2(1, 1)]
+const FACE_ORDER := [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 4]
+const LEVEL_COLORS := [
+	Color("#ff829d"), Color("#ff9b70"), Color("#bd92ed"),
+	Color("#ffe065"), Color("#ffb845"), Color("#f47378"),
+	Color("#87cf8c"), Color("#62c7ce"), Color("#80acfa"),
+	Color("#b3df70"), Color("#f1c453"),
+]
 const PARAMS := {
 	Type.CHERRY: {
 		"texture": preload("Cherry.tres"),
@@ -130,6 +141,9 @@ var in_danger := false setget set_in_danger
 var deleting := false
 var delete_pos := Vector2.ZERO
 var deleting_speed := 1000
+var visual_size := 0.0
+var level_font := DynamicFont.new()
+var level_badge := Label.new()
 
 
 onready var tween := $Tween
@@ -149,8 +163,12 @@ static func get_evolution_type_of(p_type: int) -> int:
 
 
 static func get_texture(p_type: int) -> Texture:
-	var params = PARAMS.get(p_type, PARAMS[Type.CHERRY])
-	return params.get("texture")
+	var portrait := AtlasTexture.new()
+	portrait.atlas = FACE_ATLAS
+	var cell: Vector2 = FACE_CELLS[FACE_ORDER[int(clamp(p_type, 0, len(Type) - 1))]]
+	portrait.region = Rect2(cell * FACE_CELL_SIZE, Vector2.ONE * FACE_CELL_SIZE)
+	portrait.filter_clip = true
+	return portrait
 
 
 func set_type(p_type):
@@ -166,7 +184,10 @@ func set_type(p_type):
 	if not is_inside_tree():
 		return
 	
-	sprite.texture = params.get("texture")
+	sprite.texture = get_texture(type)
+	level_font.size = int(max(16.0, radius * 0.23))
+	level_badge.text = str(type + 1)
+	level_badge.rect_size = Vector2.ONE * radius * 0.42
 	
 	var shape := CircleShape2D.new()
 	shape.radius = radius
@@ -182,7 +203,16 @@ func set_type(p_type):
 
 func _ready():
 	animation_player.play("RESET")
-	animated_face.frames = FACES[randi() % len(FACES)]
+	animated_face.hide()
+	level_font.font_data = FACE_FONT
+	level_font.use_filter = true
+	level_font.outline_size = 2
+	level_font.outline_color = Color("#254532")
+	level_badge.add_font_override("font", level_font)
+	level_badge.align = Label.ALIGN_CENTER
+	level_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level_badge.z_index = 1
+	add_child(level_badge)
 
 
 func get_collision_shape() -> Shape2D:
@@ -204,9 +234,25 @@ func grow(from_fusion := false):
 
 
 func set_size(p_scale: float):
-	sprite.scale = p_scale * Vector2.ONE
+	visual_size = p_scale
+	sprite.scale = p_scale * Vector2.ONE * (radius * 2.0 / FACE_CELL_SIZE)
+	level_badge.rect_scale = p_scale * Vector2.ONE
+	level_badge.rect_position = Vector2(radius * 0.38, radius * 0.38) * p_scale
 	animated_face.scale = p_scale * face_ratio * Vector2.ONE
 	collision_shape.shape.radius = radius * p_scale
+	update()
+
+
+func _draw():
+	if visual_size <= 0.0:
+		return
+	var r := radius * visual_size
+	var level_color: Color = LEVEL_COLORS[type]
+	draw_circle(Vector2.ZERO, r, level_color.lightened(0.62))
+	draw_arc(Vector2.ZERO, r - max(1.0, r * 0.045), 0.0, TAU, 80,
+		level_color, max(2.0, r * 0.09), true)
+	draw_arc(Vector2.ZERO, r - max(1.0, r * 0.09), 0.0, TAU, 80,
+		Color.white, max(1.0, r * 0.02), true)
 
 
 func set_in_danger(p_danger: bool):
@@ -260,24 +306,6 @@ func delete(pos: Vector2 = global_position):
 	deleting = true
 	delete_pos = pos
 
-
-
-func _process(delta):
-	
-	if falling:
-		animated_face.play("falling")
-	
-	elif rolling:
-		animated_face.play("rolling")
-	
-	elif crushed:
-		animated_face.play("crushed")
-	
-	elif in_danger:
-		animated_face.play("in_danger")
-	
-	else:
-		animated_face.play("idle")
 
 
 func _physics_process(delta):
