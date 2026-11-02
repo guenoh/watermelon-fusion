@@ -2,6 +2,22 @@
 
 Watermelon merge mobile game developed in Godot 3.5
 
+## Play in your browser
+
+**[수박 합치기 플레이](https://guenoh.github.io/watermelon-fusion/)**
+
+Open the link on a phone or computer and press **같이 놀기**. Tap or click the
+game to drop fruit. The best score is saved in the current browser; clearing
+browser storage removes it. This is a noncommercial family-play fork.
+
+This fork adds a Korean web launch screen, a portrait browser canvas, and
+automatic GitHub Pages builds. The original game and author attribution are
+preserved. Modern WebGL 2-capable browsers are required.
+
+Changes pushed to `main` are exported with Godot 3.5.3 and deployed by
+`.github/workflows/deploy-web.yml`. The generated game files are build artifacts
+and are not committed to the source repository.
+
 ## Screenshots
 
 <img src="https://github.com/koopmyers/watermelon-fusion/assets/16466001/dfbbf201-f7b8-4bed-84fd-79e197470200" alt="drawing" width="200"/>

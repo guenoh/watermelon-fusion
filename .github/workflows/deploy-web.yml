@@ -1,0 +1,76 @@
+name: Build and deploy web game
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Cache official Godot build tools
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: .godot-tools
+          key: godot-3.5.3-linux-web-v1
+      - name: Download Godot 3.5.3 and web export template
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .godot-tools
+          base=https://github.com/godotengine/godot-builds/releases/download/3.5.3-stable
+          curl --fail --location --retry 3 "$base/Godot_v3.5.3-stable_linux_headless.64.zip" -o "$RUNNER_TEMP/godot.zip"
+          unzip -j "$RUNNER_TEMP/godot.zip" -d .godot-tools
+          mv .godot-tools/Godot_v3.5.3-stable_linux_headless.64 .godot-tools/godot
+          chmod +x .godot-tools/godot
+          curl --fail --location --retry 3 "$base/Godot_v3.5.3-stable_export_templates.tpz" -o "$RUNNER_TEMP/templates.tpz"
+          unzip -j "$RUNNER_TEMP/templates.tpz" templates/webassembly_release.zip -d .godot-tools
+      - name: Import assets and export browser game
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/web
+          .godot-tools/godot --path . --editor --quit 2>&1 | tee "$RUNNER_TEMP/import.log"
+          .godot-tools/godot --path . --export Web build/web/index.html 2>&1 | tee "$RUNNER_TEMP/export.log"
+          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' "$RUNNER_TEMP/import.log" "$RUNNER_TEMP/export.log"; then
+            exit 1
+          fi
+          test -s build/web/index.html
+          test -s build/web/index.js
+          test -s build/web/index.wasm
+          test -s build/web/index.pck
+          cp LICENCE build/web/LICENCE
+          touch build/web/.nojekyll
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload web game
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
