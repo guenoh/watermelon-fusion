@@ -48,14 +48,17 @@ jobs:
           # project's preloaded visual resources reliably on a clean checkout.
           timeout 120s xvfb-run -a .godot-tools/godot --audio-driver Dummy --path . --editor --quit
           timeout 120s xvfb-run -a .godot-tools/godot --audio-driver Dummy --path . --editor --quit 2>&1 | tee "$RUNNER_TEMP/import.log"
-          timeout 120s xvfb-run -a .godot-tools/godot --audio-driver Dummy --path . --export Web build/web/index.html 2>&1 | tee "$RUNNER_TEMP/export.log"
+          # New filenames prevent browsers reusing an older engine/game pack.
+          web_name="game-${GITHUB_SHA::8}"
+          timeout 120s xvfb-run -a .godot-tools/godot --audio-driver Dummy --path . --export Web "build/web/$web_name.html" 2>&1 | tee "$RUNNER_TEMP/export.log"
           if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' "$RUNNER_TEMP/import.log" "$RUNNER_TEMP/export.log"; then
             exit 1
           fi
+          mv "build/web/$web_name.html" build/web/index.html
           test -s build/web/index.html
-          test -s build/web/index.js
-          test -s build/web/index.wasm
-          test -s build/web/index.pck
+          test -s "build/web/$web_name.js"
+          test -s "build/web/$web_name.wasm"
+          test -s "build/web/$web_name.pck"
           cp LICENCE build/web/LICENCE
           touch build/web/.nojekyll
       - name: Configure GitHub Pages

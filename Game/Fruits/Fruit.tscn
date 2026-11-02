@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=15 format=2]
 
 [ext_resource path="res://Game/Fruits/Faces/Shy.tres" type="SpriteFrames" id=1]
 [ext_resource path="res://Game/Fruits/Fruit.gd" type="Script" id=2]
@@ -230,21 +230,6 @@ radius = 76.0
 [sub_resource type="Curve" id=7]
 _data = [ Vector2( 0, 0 ), 0.0, 0.0, 0, 0, Vector2( 0.0786517, 1 ), 0.0, 0.0, 0, 0, Vector2( 1, 0 ), 0.0, 0.0, 0, 0 ]
 
-[sub_resource type="CurveTexture" id=8]
-curve = SubResource( 7 )
-
-[sub_resource type="ParticlesMaterial" id=3]
-emission_shape = 1
-emission_sphere_radius = 189.0
-flag_disable_z = true
-spread = 180.0
-gravity = Vector3( 0, 80, 0 )
-orbit_velocity = 0.0
-orbit_velocity_random = 0.0
-scale_curve = SubResource( 8 )
-hue_variation = 0.01
-hue_variation_random = 0.9
-
 [node name="Fruit" type="RigidBody2D"]
 mode = 1
 physics_material_override = SubResource( 9 )
@@ -274,15 +259,21 @@ disabled = true
 frames = ExtResource( 1 )
 animation = "idle"
 
-[node name="Particles2D" type="Particles2D" parent="."]
+[node name="Particles2D" type="CPUParticles2D" parent="."]
 emitting = false
 amount = 12
 lifetime = 0.5
 one_shot = true
 explosiveness = 0.8
 randomness = 0.5
-process_material = SubResource( 3 )
 texture = ExtResource( 4 )
+emission_shape = 1
+emission_sphere_radius = 189.0
+spread = 180.0
+gravity = Vector2( 0, 80 )
+scale_amount_curve = SubResource( 7 )
+hue_variation = 0.01
+hue_variation_random = 0.9
 
 [node name="AudioStreamPlayer2DA" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource( 7 )

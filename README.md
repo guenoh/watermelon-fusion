@@ -13,8 +13,9 @@ browser storage removes it. This is a noncommercial family-play fork.
 This fork adds personal face-ball artwork supplied by the family, eleven colored
 and numbered merge levels, a Korean web launch screen, a portrait browser canvas,
 and automatic GitHub Pages builds. The final level wears the traditional hat.
-The original game rules and author attribution are preserved. Modern WebGL
-2-capable browsers are required.
+The original game rules and author attribution are preserved. The web build uses
+the GLES2 / WebGL 1 renderer, CPU particles, and a simple translucent menu backdrop
+for browser compatibility. No WebGL 2 or screen-copy blur shader is required.
 
 The original project license below covers the original game. Personal family
 portrait artwork in `Game/Personal/` is separate content; see that folder's

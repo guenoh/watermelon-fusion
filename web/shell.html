@@ -63,8 +63,8 @@ $GODOT_HEAD_INCLUDE
     const progress = document.getElementById('progress');
     start.addEventListener('click', async () => {
       if (start.dataset.retry) { location.reload(); return; }
-      if (!Engine.isWebGLAvailable(2)) {
-        message.textContent = 'WebGL 2를 지원하는 최신 Chrome 또는 Safari로 열어 주세요.';
+      if (!Engine.isWebGLAvailable(1)) {
+        message.textContent = 'WebGL을 지원하는 최신 Chrome 또는 Safari로 열어 주세요.';
         return;
       }
       start.disabled = true;
