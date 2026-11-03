@@ -107,6 +107,7 @@ func run_checks():
 	yield(create_timer(0.04), "timeout")
 	var release_x: float = held.global_position.x
 	touch(1000, false)
+	check(drops == 1, "a ready ball drops immediately on release, without a pending physics-frame command")
 	yield(create_timer(0.08), "timeout")
 	check(drops == 1 and held.mode == RigidBody2D.MODE_RIGID, "release drops exactly once")
 	check(abs(held.global_position.x - release_x) < 2.0, "release drops from the visible ball position without a final snap")
@@ -146,7 +147,16 @@ func run_checks():
 	touch(100, true)
 	touch(100, false)
 	yield(create_timer(0.7), "timeout")
-	check(drops == 3 and is_instance_valid(early_ball) and early_ball.mode == RigidBody2D.MODE_RIGID, "release during initial loading is queued and drops once ready")
+	check(drops == 2 and is_instance_valid(early_ball) and early_ball == claw.current_fruit and early_ball.mode == RigidBody2D.MODE_STATIC, "a tap during loading is discarded rather than queued")
+	game.reset()
+	game.start()
+	early_ball = claw.next_fruit
+	touch(100, true)
+	yield(create_timer(0.6), "timeout")
+	drag(200)
+	touch(200, false)
+	yield(create_timer(0.08), "timeout")
+	check(drops == 2 and early_ball == claw.current_fruit and early_ball.mode == RigidBody2D.MODE_STATIC, "a gesture started before readiness cannot release the later ready ball")
 	for _i in range(4):
 		game.reset()
 		game.start()
@@ -163,7 +173,20 @@ func run_checks():
 	mouse(210, false)
 	touch(210, false)
 	yield(create_timer(0.08), "timeout")
-	check(drops == 4 and mouse_ball.mode == RigidBody2D.MODE_RIGID, "mouse plus emulated touch releases exactly once after restart")
+	check(drops == 3 and mouse_ball.mode == RigidBody2D.MODE_RIGID, "mouse plus emulated touch releases exactly once after restart")
+	var waiting_ball = claw.current_fruit
+	for _i in range(6):
+		touch(100, true)
+		touch(100, false)
+		yield(create_timer(0.01), "timeout")
+	var after_burst := drops
+	yield(create_timer(0.7), "timeout")
+	check(after_burst == 3 and drops == after_burst and claw.armed and claw.current_fruit == waiting_ball, "rapid taps during preparation cannot cause a delayed drop after tapping stops")
+	touch(100, true)
+	touch(100, false)
+	check(drops == 4, "the next fresh tap works immediately once the ball is ready")
+	yield(create_timer(0.7), "timeout")
+	check(drops == 4, "no tap backlog drains into subsequent balls")
 	app.queue_free()
 	yield(create_timer(0.1), "timeout")
 	app = null
@@ -174,7 +197,7 @@ func run_checks():
 	tap_ball = null
 
 	if failures.empty():
-		print("PASS: responsive relative drag, wall reversal, touch/mouse deduplication, early release, rapid restarts, cancellation and taps")
+		print("PASS: immediate ready-ball release, no buffered taps or cross-readiness gestures, responsive drag, walls, mouse/touch deduplication and restarts")
 		quit(0)
 	else:
 		quit(1)

@@ -13,8 +13,10 @@ position. A quick tap or click drops at the current aim position. The next ball
 keeps that position. The best score is saved in the current browser; clearing
 browser storage removes it. A faster follow keeps aiming close to the finger;
 reversing direction at a wall responds immediately. Mouse and touch releases use
-one gesture owner, and releasing while the next ball is preparing queues one
-drop. Restart cancels old gestures and loading animations before the new round.
+one gesture owner. Only a gesture begun on a ready ball can drop it, immediately
+on release. Taps while the next ball is preparing are discarded; they never queue
+up or drop later balls after tapping stops. Restart cancels old gestures and
+loading animations before the new round.
 This is a noncommercial family-play fork.
 
 Faces use low contact friction and a gentle sideways correction only when two

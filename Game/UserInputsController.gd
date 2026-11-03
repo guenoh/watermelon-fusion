@@ -65,5 +65,6 @@ func _unhandled_input(event):
 		emit_signal("fruit_grabbed", event.position.x)
 	elif event is InputEventMouseMotion and active_mouse:
 		emit_signal("fruit_moved", event.position.x)
-	elif OS.is_debug_build() and event.is_action_pressed("ui_accept"):
+	elif OS.is_debug_build() and event.is_action_pressed("ui_accept") and active_touch == -1 and not active_mouse:
+		emit_signal("fruit_grabbed", get_local_mouse_position().x)
 		emit_signal("fruit_dropped", get_local_mouse_position().x)

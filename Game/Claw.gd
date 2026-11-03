@@ -16,8 +16,8 @@ var arming := false
 
 var drop_position_x := 0.0
 var half_width := 360.0
-var user_dropped := false
 var dragging := false
+var gesture_fruit: Fruit
 var grab_offset_x := 0.0
 var generation := 0
 
@@ -56,8 +56,7 @@ func unload():
 	armed = false
 	arming = false
 	dragging = false
-	
-	user_dropped = false
+	gesture_fruit = null
 	current_fruit = null
 	next_fruit = null
 	position.x = 0.0
@@ -77,6 +76,8 @@ func arm():
 	next_fruit = null
 	arming = true
 	current_fruit = fruit
+	dragging = false
+	gesture_fruit = null
 	
 	fruit.global_position.x = position.x
 	tween.stop_all()
@@ -102,10 +103,8 @@ func set_horizontal_bounds(width: float):
 
 
 func _on_UserInputsController_fruit_moved(pos_x):
-	if dragging and not user_dropped:
-		var fruit = current_fruit if is_instance_valid(current_fruit) else next_fruit
-		if not is_instance_valid(fruit):
-			return
+	if dragging and armed and is_instance_valid(gesture_fruit) and gesture_fruit == current_fruit:
+		var fruit = current_fruit
 		var limit := max(0.0, half_width - fruit.radius - 2.0)
 		var requested: float = pos_x + grab_offset_x
 		drop_position_x = clamp(requested, -limit, limit)
@@ -116,28 +115,25 @@ func _on_UserInputsController_fruit_moved(pos_x):
 
 
 func _on_UserInputsController_fruit_grabbed(pos_x):
-	if user_dropped:
+	if not armed or not is_instance_valid(current_fruit):
+		_on_UserInputsController_drag_cancelled()
 		return
 	dragging = true
+	gesture_fruit = current_fruit
 	grab_offset_x = position.x - pos_x
 	drop_position_x = position.x
 
 
 func _on_UserInputsController_drag_cancelled():
 	dragging = false
-	user_dropped = false
+	gesture_fruit = null
 	drop_position_x = position.x
 
 
 func _physics_process(delta):
-	if not is_instance_valid(current_fruit) or not (armed or arming):
+	if not armed or not is_instance_valid(current_fruit):
 		return
-	if user_dropped and armed:
-		# Release from the position actually shown, without snapping to the
-		# pointer or waiting for a trailing ball to finish catching up.
-		drop()
-		return
-	if not dragging or user_dropped:
+	if not dragging or gesture_fruit != current_fruit:
 		return
 
 	# A frame-rate-independent follow keeps small movements responsive and
@@ -153,20 +149,19 @@ func _physics_process(delta):
 
 
 func _on_UserInputsController_fruit_dropped(_pos_x):
-	if not is_instance_valid(current_fruit) and not is_instance_valid(next_fruit):
-		return
-	
-	if user_dropped:
-		return
-	
+	# A release belongs only to the ready ball grabbed by this gesture.
+	# Never carry taps through loading/arming into a later ball.
+	var release_ready: bool = armed and dragging and is_instance_valid(gesture_fruit) and gesture_fruit == current_fruit
 	dragging = false
+	gesture_fruit = null
 	drop_position_x = position.x
-	user_dropped = true
+	if release_ready:
+		drop()
 
 
 
 func drop():
-	if not armed:
+	if not armed or not is_instance_valid(current_fruit):
 		return
 	
 	if is_instance_valid(current_fruit):
@@ -174,8 +169,8 @@ func drop():
 		current_fruit = null
 	
 	armed = false
-	user_dropped = false
 	dragging = false
+	gesture_fruit = null
 	drop_position_x = position.x
 	
 	if not armed and loaded:
