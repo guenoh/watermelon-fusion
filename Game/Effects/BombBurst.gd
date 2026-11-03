@@ -6,6 +6,8 @@ const FONT_DATA := preload("res://Game/HUD/Fonts/FamilySansKR-Semibold.ttf")
 var blast_radius := 185.0
 var elapsed := 0.0
 var shout := Label.new()
+var caption := "펑!"
+var sound_pitch := 0.65
 
 
 func _ready():
@@ -16,13 +18,14 @@ func _ready():
 	font.outline_color = Color.white
 	shout.add_font_override("font", font)
 	shout.add_color_override("font_color", Color("#f4759e"))
-	shout.text = "펑!"
+	shout.text = caption
 	shout.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	shout.rect_position = Vector2(-48, -68)
+	shout.rect_size = font.get_string_size(caption)
+	shout.rect_position = Vector2(-shout.rect_size.x * 0.5, -68)
 	add_child(shout)
 	var audio := AudioStreamPlayer.new()
 	audio.stream = preload("res://Game/Fruits/pop.mp3")
-	audio.pitch_scale = 0.65
+	audio.pitch_scale = sound_pitch
 	audio.volume_db = -6.0
 	add_child(audio)
 	audio.play()

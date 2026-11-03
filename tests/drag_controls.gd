@@ -43,7 +43,7 @@ func on_drop():
 
 func run_checks():
 	app = load("res://App.tscn").instance()
-	app.get_node("Game").bombs_enabled = false
+	app.get_node("Game").specials_enabled = false
 	root.add_child(app)
 	game = app.get_node("Game")
 	controller = game.get_node("UserInputsController")

@@ -35,26 +35,32 @@ func make_piece(piece_type: int, point: Vector2):
 func run_checks():
 	app = load("res://App.tscn").instance()
 	game = app.get_node("Game")
-	game.bombs_enabled = false
+	game.specials_enabled = false
 	root.add_child(app)
 	yield(create_timer(1.2), "timeout")
 	game.speech_timer.stop()
 	check(game.claw.current_fruit.type != Fruit.Type.BOMB, "no guaranteed starting bomb")
-	check(game._is_bomb_roll(0.0) and game._is_bomb_roll(0.009999), "rolls below one percent produce bombs")
-	check(not game._is_bomb_roll(0.01) and not game._is_bomb_roll(0.99), "one percent boundary is exclusive")
+	check(game._is_special_roll(0.0) and game._is_special_roll(0.009999), "rolls below one percent produce rare pieces")
+	check(not game._is_special_roll(0.01) and not game._is_special_roll(0.99), "one percent boundary is exclusive")
 	var hits := 0
 	for i in range(1000):
-		if game._is_bomb_roll(float(i) / 1000.0):
+		if game._is_special_roll(float(i) / 1000.0):
 			hits += 1
-	check(hits == 10, "bomb chance is exactly one percent of the roll interval")
+	check(hits == 10, "combined rare-piece chance is exactly one percent of the roll interval")
 	var expected_rng := RandomNumberGenerator.new()
 	expected_rng.seed = 13579
-	game.bomb_rng.seed = 13579
-	game.bombs_enabled = true
+	game.special_rng.seed = 13579
+	game.specials_enabled = true
 	for _i in range(1000):
 		var expected := expected_rng.randf() < 0.01
-		check((game.roll_next_fruit() == Fruit.Type.BOMB) == expected, "piece queue applies one independent bomb roll per piece")
-	game.bombs_enabled = false
+		var expected_type := -1
+		if expected:
+			expected_type = game.SPECIAL_TYPES[expected_rng.randi_range(0, 3)]
+		var actual_type: int = game.roll_next_fruit()
+		check(Fruit.is_special_type(actual_type) == expected, "piece queue applies one combined independent 1% roll per piece")
+		if expected:
+			check(actual_type == expected_type, "one of the four rare types is chosen only after a rare roll")
+	game.specials_enabled = false
 	game.family_speech.say("박근오 아빠,\n사랑해요!", game.claw.current_fruit)
 	yield(create_timer(0.1), "timeout")
 	check(game.family_speech.visible and game.family_speech.label.text.find("사랑해요") >= 0, "Korean speech is shown")
@@ -106,7 +112,7 @@ func run_checks():
 	face_a = null
 	face_b = null
 	if failures.empty():
-		print("PASS: Korean speech, independent 1% bomb queue, normal claw use, single contact blast, radius and preview protection")
+		print("PASS: Korean speech, combined independent 1% rare queue, normal claw use, single bomb blast, radius and preview protection")
 		quit(0)
 	else:
 		quit(1)

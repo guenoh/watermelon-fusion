@@ -4,6 +4,8 @@ class_name Fruit
 
 signal fusionned(fruit)
 signal bomb_triggered(bomb)
+signal special_triggered(special, target)
+signal remix_triggered(mom)
 
 
 enum Type {
@@ -19,12 +21,18 @@ enum Type {
 	MELON,
 	WATERMELON,
 	BOMB,
+	SUAN,
+	SUMIN,
+	MOM,
 }
 
 const SCENE := "Fruit.tscn"
 const FACE_ATLAS := preload("res://Game/Personal/face-atlas.png")
 const FACE_FONT := preload("res://Menu/Theme/LilitaOne-Regular-NotoSans-Black.ttf")
 const BOMB_TEXTURE := preload("res://Game/Fruits/bomb.svg")
+const SPECIAL_ATLAS := preload("res://Game/Personal/special-portraits.png")
+const KOREAN_FONT := preload("res://Game/HUD/Fonts/FamilySansKR-Semibold.ttf")
+const MOM_TEXTURE := preload("res://Game/Personal/mom-portrait.png")
 const FACE_CELL_SIZE := 512.0
 const FACE_CELLS := [Vector2(0, 0), Vector2(1, 0), Vector2(2, 0), Vector2(0, 1), Vector2(1, 1)]
 const FACE_ORDER := [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 4]
@@ -117,6 +125,9 @@ const PARAMS := {
 		"points": 0,
 		"color": Color("#ff91b5"),
 	},
+	Type.SUAN: {"radius": 64, "points": 0, "color": Color("#53c9ed")},
+	Type.SUMIN: {"radius": 64, "points": 0, "color": Color("#f487c1")},
+	Type.MOM: {"radius": 64, "points": 0, "color": Color("#ffbe55")},
 }
 
 const FACES := [
@@ -150,6 +161,10 @@ var in_danger := false setget set_in_danger
 var deleting := false
 var popping := false
 var blast_requested := false
+var special_requested := false
+var merge_delay := 0.0
+var remix_requested := false
+var remix_floor_y := 0.0
 var delete_pos := Vector2.ZERO
 var deleting_speed := 1000
 var visual_size := 0.0
@@ -170,12 +185,25 @@ onready var audio_player_b := $AudioStreamPlayer2DB
 
 
 static func get_evolution_type_of(p_type: int) -> int:
-	return (p_type + 1) % len(Type)
+	return int(min(p_type + 1, Type.WATERMELON))
+
+
+static func is_special_type(p_type: int) -> bool:
+	return p_type >= Type.BOMB
 
 
 static func get_texture(p_type: int) -> Texture:
 	if p_type == Type.BOMB:
 		return BOMB_TEXTURE
+	if p_type == Type.MOM:
+		return MOM_TEXTURE
+	if p_type == Type.SUAN or p_type == Type.SUMIN:
+		var special_portrait := AtlasTexture.new()
+		special_portrait.atlas = SPECIAL_ATLAS
+		var cell_size: float = SPECIAL_ATLAS.get_width() * 0.5
+		special_portrait.region = Rect2(Vector2((p_type - Type.SUAN) * cell_size, 0), Vector2.ONE * cell_size)
+		special_portrait.filter_clip = true
+		return special_portrait
 	var portrait := AtlasTexture.new()
 	portrait.atlas = FACE_ATLAS
 	var cell: Vector2 = FACE_CELLS[FACE_ORDER[int(clamp(p_type, 0, len(FACE_ORDER) - 1))]]
@@ -201,6 +229,11 @@ func set_type(p_type):
 	level_font.size = int(max(16.0, radius * 0.23))
 	level_badge.text = "" if type == Type.BOMB else str(type + 1)
 	level_badge.rect_size = Vector2.ONE * radius * 0.42
+	level_font.font_data = KOREAN_FONT if type >= Type.SUAN else FACE_FONT
+	if type >= Type.SUAN:
+		level_font.size = 24
+		level_badge.text = {Type.SUAN: "수안", Type.SUMIN: "수민 ×5", Type.MOM: "엄마"}[type]
+		level_badge.rect_size = Vector2(radius * 1.8, 30)
 	
 	var shape := CircleShape2D.new()
 	shape.radius = radius
@@ -247,9 +280,11 @@ func grow(from_fusion := false):
 
 func set_size(p_scale: float):
 	visual_size = p_scale
-	sprite.scale = p_scale * Vector2.ONE * (radius * 2.0 / FACE_CELL_SIZE)
+	sprite.scale = p_scale * Vector2.ONE * (radius * 2.0 / sprite.texture.get_width())
 	level_badge.rect_scale = p_scale * Vector2.ONE
 	level_badge.rect_position = Vector2(radius * 0.38, radius * 0.38) * p_scale
+	if type >= Type.SUAN:
+		level_badge.rect_position = Vector2(-radius * 0.9, radius * 0.55) * p_scale
 	animated_face.scale = p_scale * face_ratio * Vector2.ONE
 	collision_shape.shape.radius = radius * p_scale
 	update()
@@ -259,7 +294,7 @@ func _draw():
 	if visual_size <= 0.0:
 		return
 	var r := radius * visual_size
-	var level_color: Color = Color("#ff91b5") if type == Type.BOMB else LEVEL_COLORS[type]
+	var level_color: Color = PARAMS[type].color if is_special_type(type) else LEVEL_COLORS[type]
 	draw_circle(Vector2.ZERO, r, level_color.lightened(0.62))
 	draw_arc(Vector2.ZERO, r - max(1.0, r * 0.045), 0.0, TAU, 80,
 		level_color, max(2.0, r * 0.09), true)
@@ -283,6 +318,10 @@ func fall(impulse: int = 1):
 	contact_monitor = true
 	collision_shape.set_deferred("disabled", false)
 	mode = MODE_RIGID
+	if type == Type.MOM:
+		# Only the box occupies layer 2. Other balls cannot block mom's descent.
+		collision_layer = 0
+		collision_mask = 2
 	apply_central_impulse(mass * impulse * Vector2.DOWN) # small impulse to feel gravity again
 	invincibility_timer.start()
 
@@ -324,6 +363,10 @@ func delete(pos: Vector2 = global_position):
 
 
 func _physics_process(delta):
+	if merge_delay > 0.0:
+		merge_delay = max(0.0, merge_delay - delta)
+		if merge_delay == 0.0:
+			call_deferred("_retry_merge_contacts")
 	
 	if not deleting:
 		return
@@ -336,7 +379,21 @@ func _physics_process(delta):
 		queue_free()
 
 
+func _retry_merge_contacts():
+	if mode != MODE_RIGID or deleting or popping or fusionned:
+		return
+	for body in get_colliding_bodies():
+		_on_body_entered(body)
+		if fusionned or deleting or popping:
+			break
+
+
 func _integrate_forces(state: Physics2DDirectBodyState):
+	if type == Type.MOM:
+		if not remix_requested and state.get_contact_count() > 0 and state.transform.origin.y + radius >= remix_floor_y - 4.0:
+			remix_requested = true
+			emit_signal("remix_triggered", self)
+		return
 	# Perfectly centered circles have no sideways collision force. Break only
 	# that unstable balance, then let gravity and friction handle the roll.
 	for contact in range(state.get_contact_count()):
@@ -359,14 +416,29 @@ func _integrate_forces(state: Physics2DDirectBodyState):
 
 
 func _on_body_entered(body):
-	if deleting or popping:
+	if deleting or popping or fusionned:
 		return
+	if type == Type.MOM:
+		return # The floor contact is checked even if a wall was touched first.
 	if type == Type.BOMB:
 		if mode == MODE_RIGID and not blast_requested:
 			blast_requested = true
 			emit_signal("bomb_triggered", self)
 		return
 	if body.get_script() != get_script():
+		return
+	if body.deleting or body.popping or body.fusionned:
+		return
+	if type >= Type.SUAN:
+		# Walls and other rare items do not consume a face-targeting ability.
+		if special_requested or body.mode != MODE_RIGID or is_special_type(body.type):
+			return
+		special_requested = true
+		fusionned = true
+		body.fusionned = true
+		emit_signal("special_triggered", self, body)
+		return
+	if is_special_type(body.type) or merge_delay > 0.0 or body.merge_delay > 0.0:
 		return
 	
 	if body.type != type:

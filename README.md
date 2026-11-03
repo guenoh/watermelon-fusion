@@ -18,11 +18,28 @@ different levels balance almost exactly center-on-center, so repeated centered
 drops roll into a pile instead of freezing into a vertical tower.
 
 Faces occasionally speak Korean family messages in a floating bubble. Each new
-queued piece independently has a 1% chance to be a heart bomb instead of a face;
-there is no guaranteed starting bomb or separate inventory button. Drag and drop
-the bomb normally. Its first contact with a face or the box clears nearby dropped
-pieces, awards their points, and leaves the held/preview pieces intact. A 1%
-chance is independent each time, not a guaranteed bomb every 100 pieces.
+queued piece independently has a **combined 1%** chance to be a rare bubble.
+That roll chooses equally between the heart bomb, **수안** (blue), **수민 ×5**
+(pink), and **엄마** (gold), so each type has a 1/400 overall chance. There is no guaranteed starting
+item or separate inventory button; all four use the usual drag and drop.
+
+The bomb clears nearby dropped pieces on its first contact with a face or the
+box, awards their points, and protects held/preview pieces. Suan combines with
+the first ordinary face he touches and upgrades its level, capped at the final
+hat portrait; scoring follows a pair of that target level. Sumin replaces herself
+and the first ordinary face she touches with **five total copies** of that face.
+Copies are spaced within the side walls without overlapping existing dropped
+pieces, and have a 1.25-second merge delay so all five can be seen before normal
+merging resumes. Copy creation itself awards no points. Walls and other rare
+bubbles do not consume Suan/Sumin's face-targeting ability; touching a bomb still
+detonates the bomb. Reset discards pending abilities from the previous round.
+
+Mom passes through every ball and activates only on reaching the floor, including
+when she touches a side wall first. Her “빨리빨리!” speech bubble and heart burst
+launch all dropped balls sideways/upward with spin, preserving them and awarding
+no points for the remix itself. Upward velocity is bounded by each ball's free
+headroom. A brief merge pause and danger grace let the pile shuffle before normal
+merging and game-over checks resume; held and preview pieces remain protected.
 
 Korean text uses a renamed subset of Noto Sans KR under the SIL Open Font License;
 see `Game/HUD/Fonts/OFL.txt`.
