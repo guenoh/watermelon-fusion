@@ -47,6 +47,7 @@ func _ready():
 
 
 func _on_MenuButton_pressed():
+	$UserInputsController.cancel_drag()
 	emit_signal("menu_pressed")
 
 
@@ -60,6 +61,7 @@ func set_area(p_view_rect: Rect2, p_safe_rect: Rect2):
 	var box_area := p_safe_rect.size
 	box_area.y -= TOP_SCREEN_MARIN + margin_top
 	box.set_size(box_area)
+	claw.set_horizontal_bounds(box_area.x)
 	
 	camera.position.y = -(p_view_rect.size.y*0.5) + margin_bottom + BOTTOM_SCREEN_MARGIN
 
@@ -163,6 +165,7 @@ func start():
 
 func end():
 	
+	$UserInputsController.cancel_drag()
 	claw.unload()
 	
 	var fruits_sorted := fruits.get_children()
@@ -201,6 +204,7 @@ func _comp_fruit_heigth(fruit_a: Fruit, fruit_b: Fruit):
 
 
 func reset():
+	$UserInputsController.cancel_drag()
 	self.score = 0
 	
 	claw_index = 0

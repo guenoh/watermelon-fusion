@@ -4,15 +4,16 @@ extends KinematicBody2D
 signal armed
 signal dropped
 
-const SPEED := 700
 const FRUIT_DROP_IMPULSE := 800
 const ARM_DURATION := 0.5 # sec
 
 
 var loaded := false
 var armed := false
+var arming := false
 
-var drop_position_x := 0 # global
+var drop_position_x := 0.0
+var half_width := 360.0
 var user_dropped := false
 
 var next_fruit: Fruit
@@ -30,16 +31,20 @@ func load_fruit(fruit):
 	fruit.global_position.y = global_position.y + next_fruit_position.y
 	
 	next_fruit = fruit
-	loaded = true
+	loaded = false
 	
 	yield(next_fruit.grow(), "completed")
-	if not armed:
+	if not is_instance_valid(fruit) or next_fruit != fruit:
+		return
+	loaded = true
+	if not armed and not arming:
 		arm()
 
 
 func unload():
 	loaded = false
 	armed = false
+	arming = false
 	
 	user_dropped = false
 	current_fruit = null
@@ -47,56 +52,53 @@ func unload():
 
 
 func arm():
-	if not loaded:
+	if not loaded or arming:
 		return
 	
-	drop_position_x = 0
-	position.x = 0
-	
 	var fruit = next_fruit
+	var limit := max(0.0, half_width - fruit.radius - 2.0)
+	position.x = clamp(drop_position_x, -limit, limit)
 	
 	loaded = false
 	next_fruit = null
+	arming = true
+	current_fruit = fruit
 	
 	tween.interpolate_property(fruit, "global_position", fruit.global_position,  global_position,
 		ARM_DURATION, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	tween.start()
 	yield(tween, "tween_all_completed")
 	
-	if not is_instance_valid(fruit): # fruit has been freed while tweening
+	if not is_instance_valid(fruit) or current_fruit != fruit:
 		return
 	
+	arming = false
 	armed = true
-	current_fruit = fruit
 	collision_shape.shape = current_fruit.get_collision_shape()
 	emit_signal("armed")
 
 
 
-func _on_UserInputsController_fruit_moved(_pos_x):
-	pass
-#	if null == current_fruit:
-#		return
-#	drop_position_x = pos_x
+func set_horizontal_bounds(width: float):
+	half_width = max(1.0, width * 0.5)
+
+
+func _on_UserInputsController_fruit_moved(pos_x):
+	if not user_dropped:
+		drop_position_x = pos_x
 
 
 func _physics_process(delta):
-	if not armed:
+	if not armed or not is_instance_valid(current_fruit):
 		return
-		
-	var target := Vector2(drop_position_x, global_position.y)
-	
-	if SPEED*0.1 < position.distance_squared_to(target):
-		var movement := position.direction_to(target)* SPEED
-		var collision := move_and_collide(movement * delta)
-		
-		if is_instance_valid(current_fruit):
-			current_fruit.global_position = global_position
-		
-		if collision:
-			drop()
-	
-	elif user_dropped:
+
+	# Hitting a wall while aiming stops horizontal movement. Only releasing
+	# the gesture drops the ball, after applying its final pointer position.
+	var limit := max(0.0, half_width - current_fruit.radius - 2.0)
+	var target_x := clamp(drop_position_x, -limit, limit)
+	move_and_collide(Vector2(target_x - position.x, 0.0))
+	current_fruit.global_position = global_position
+	if user_dropped:
 		drop()
 
 
@@ -122,7 +124,6 @@ func drop():
 	
 	armed = false
 	user_dropped = false
-	drop_position_x = 0
 	
 	if not armed and loaded:
 		arm()

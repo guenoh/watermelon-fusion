@@ -211,7 +211,6 @@ func _ready():
 	level_badge.add_font_override("font", level_font)
 	level_badge.align = Label.ALIGN_CENTER
 	level_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	level_badge.z_index = 1
 	add_child(level_badge)
 
 

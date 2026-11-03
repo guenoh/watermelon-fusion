@@ -48,10 +48,11 @@ jobs:
           # project's preloaded visual resources reliably on a clean checkout.
           timeout 120s xvfb-run -a .godot-tools/godot --audio-driver Dummy --path . --editor --quit
           timeout 120s xvfb-run -a .godot-tools/godot --audio-driver Dummy --path . --editor --quit 2>&1 | tee "$RUNNER_TEMP/import.log"
+          timeout 30s xvfb-run -a .godot-tools/godot --audio-driver Dummy --path . --script tests/drag_controls.gd 2>&1 | tee "$RUNNER_TEMP/controls.log"
           # New filenames prevent browsers reusing an older engine/game pack.
           web_name="game-${GITHUB_SHA::8}"
           timeout 120s xvfb-run -a .godot-tools/godot --audio-driver Dummy --path . --export Web "build/web/$web_name.html" 2>&1 | tee "$RUNNER_TEMP/export.log"
-          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' "$RUNNER_TEMP/import.log" "$RUNNER_TEMP/export.log"; then
+          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' "$RUNNER_TEMP/import.log" "$RUNNER_TEMP/controls.log" "$RUNNER_TEMP/export.log"; then
             exit 1
           fi
           mv "build/web/$web_name.html" build/web/index.html

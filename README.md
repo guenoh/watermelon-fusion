@@ -6,8 +6,9 @@ Watermelon merge mobile game developed in Godot 3.5
 
 **[얼굴 합치기 플레이](https://guenoh.github.io/watermelon-fusion/)**
 
-Open the link on a phone or computer and press **같이 놀기**. Tap or click the
-game to drop a face ball. The best score is saved in the current browser; clearing
+Open the link on a phone or computer and press **같이 놀기**. Hold and drag left
+or right to aim, then release to drop the face ball. A quick tap or click still
+works. The next ball keeps the previous aim position. The best score is saved in the current browser; clearing
 browser storage removes it. This is a noncommercial family-play fork.
 
 This fork adds personal face-ball artwork supplied by the family, eleven colored
