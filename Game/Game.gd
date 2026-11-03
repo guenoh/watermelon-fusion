@@ -20,10 +20,11 @@ const CLAW_START_SEQUENCE := [Fruit.Type.CHERRY, Fruit.Type.CHERRY, Fruit.Type.S
 const FRUIT_FALL_FUSION_IMPULSE := 500
 
 const MULTIPLICATOR_MAX := 8
-const SPECIAL_CHANCE := 0.01
+const SPECIAL_CHANCE := 0.02
 const SPECIAL_TYPES := [Fruit.Type.BOMB, Fruit.Type.SUAN, Fruit.Type.SUMIN, Fruit.Type.MOM]
 const COPY_COUNT := 5
 const COPY_MERGE_DELAY := 1.25
+const REMIX_DANGER_GRACE := 8.0
 const BOMB_BLAST_RADIUS := 185.0
 const Speech := preload("res://Game/HUD/FamilySpeech.gd")
 const BombBurst := preload("res://Game/Effects/BombBurst.gd")
@@ -219,6 +220,8 @@ func _on_Box_limit_reached():
 
 func start():
 	playing = true
+	box.set_monitoring_enabled(true)
+	$UserInputsController.set_enabled(true)
 	message_cursor = 0
 	speech_timer.start(2.2)
 	self.next_fruit_type = roll_next_fruit()
@@ -231,6 +234,9 @@ func end():
 	if not playing:
 		return
 	playing = false
+	var ending_round := round_id
+	box.set_monitoring_enabled(false)
+	$UserInputsController.set_enabled(false)
 	speech_timer.stop()
 	family_speech.clear()
 	$UserInputsController.cancel_drag()
@@ -256,10 +262,14 @@ func end():
 		
 		pop_timer.start(time)
 		yield(pop_timer, "timeout")
+		if ending_round != round_id or playing:
+			return
 	
 	
 	pop_timer.start(1.0)
 	yield(pop_timer, "timeout")
+	if ending_round != round_id or playing:
+		return
 	emit_signal("ended")
 
 
@@ -274,6 +284,9 @@ func _comp_fruit_heigth(fruit_a: Fruit, fruit_b: Fruit):
 func reset():
 	playing = false
 	round_id += 1
+	pop_timer.stop()
+	box.set_monitoring_enabled(false)
+	$UserInputsController.set_enabled(false)
 	speech_timer.stop()
 	family_speech.clear()
 	$UserInputsController.cancel_drag()
@@ -330,8 +343,7 @@ func _remix_faces(mom, source_round: int):
 	mom.fusionned = true
 	mom.pop()
 	# Give a running danger countdown a fresh start after the remix settles.
-	box.animation_player.stop()
-	box.get_node("AudioStreamPlayer").stop()
+	box.reset_danger(REMIX_DANGER_GRACE)
 	var index := 0
 	var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 	for fruit in fruits.get_children():

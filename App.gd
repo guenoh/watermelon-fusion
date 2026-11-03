@@ -76,5 +76,14 @@ func _on_GameMenu_replay_pressed():
 	
 	game.reset()
 	game.start()
+	game.get_node("UserInputsController").set_enabled(not menu.visible)
 	
 	menu.close()
+
+
+func _on_Menu_opened():
+	game.get_node("UserInputsController").set_enabled(false)
+
+
+func _on_Menu_closed():
+	game.get_node("UserInputsController").set_enabled(game.playing)

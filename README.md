@@ -11,16 +11,20 @@ playfield and drag left or right: the ball follows your movement smoothly while
 preserving the initial grab offset. Release to drop from its current visible
 position. A quick tap or click drops at the current aim position. The next ball
 keeps that position. The best score is saved in the current browser; clearing
-browser storage removes it. This is a noncommercial family-play fork.
+browser storage removes it. A faster follow keeps aiming close to the finger;
+reversing direction at a wall responds immediately. Mouse and touch releases use
+one gesture owner, and releasing while the next ball is preparing queues one
+drop. Restart cancels old gestures and loading animations before the new round.
+This is a noncommercial family-play fork.
 
 Faces use low contact friction and a gentle sideways correction only when two
 different levels balance almost exactly center-on-center, so repeated centered
 drops roll into a pile instead of freezing into a vertical tower.
 
 Faces occasionally speak Korean family messages in a floating bubble. Each new
-queued piece independently has a **combined 1%** chance to be a rare bubble.
+queued piece independently has a **combined 2%** chance to be a rare bubble.
 That roll chooses equally between the heart bomb, **수안** (blue), **수민 ×5**
-(pink), and **엄마** (gold), so each type has a 1/400 overall chance. There is no guaranteed starting
+(pink), and **엄마** (gold), so each type has a 1/200 overall chance. There is no guaranteed starting
 item or separate inventory button; all four use the usual drag and drop.
 
 The bomb clears nearby dropped pieces on its first contact with a face or the
@@ -38,8 +42,11 @@ Mom passes through every ball and activates only on reaching the floor, includin
 when she touches a side wall first. Her “빨리빨리!” speech bubble and heart burst
 launch all dropped balls sideways/upward with spin, preserving them and awarding
 no points for the remix itself. Upward velocity is bounded by each ball's free
-headroom. A brief merge pause and danger grace let the pile shuffle before normal
-merging and game-over checks resume; held and preview pieces remain protected.
+headroom. A brief merge pause and eight-second danger grace let the pile shuffle;
+held and preview pieces remain protected. Game over requires the same dropped
+ball to remain settled above the line continuously for 3.1 seconds. Flying balls,
+previews and removed balls do not count, and returning below the line clears the
+warning immediately. Restarts clear the previous round's warning state.
 
 Korean text uses a renamed subset of Noto Sans KR under the SIL Open Font License;
 see `Game/HUD/Fonts/OFL.txt`.

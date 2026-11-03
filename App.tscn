@@ -17,3 +17,5 @@ layer = 10
 [connection signal="ended" from="Game" to="." method="_on_Game_ended"]
 [connection signal="menu_pressed" from="Game" to="." method="_on_Game_menu_pressed"]
 [connection signal="replay_pressed" from="Menus/Menu" to="." method="_on_GameMenu_replay_pressed"]
+[connection signal="opened" from="Menus/Menu" to="." method="_on_Menu_opened"]
+[connection signal="closed" from="Menus/Menu" to="." method="_on_Menu_closed"]

@@ -42,7 +42,7 @@ $GODOT_HEAD_INCLUDE
     <section id="welcome" aria-labelledby="title">
       <p class="fruit" aria-hidden="true">🙂</p>
       <h1 id="title">얼굴 합치기</h1>
-      <p>좌우로 끌고 손을 떼면 톡!<br>특별 버블은 모두 합쳐 1% 확률!<br>폭탄은 펑! · 수안이는 어떤 얼굴이든 합체!<br>수민이는 처음 닿은 얼굴을 5개로!<br>엄마는 바닥에서 “빨리빨리!” 다 같이 섞기!</p>
+      <p>좌우로 끌고 손을 떼면 톡!<br>특별 버블은 모두 합쳐 2% 확률!<br>폭탄은 펑! · 수안이는 어떤 얼굴이든 합체!<br>수민이는 처음 닿은 얼굴을 5개로!<br>엄마는 바닥에서 “빨리빨리!” 다 같이 섞기!</p>
       <button id="start" type="button">같이 놀기</button>
       <progress id="progress" max="100" value="0" aria-label="게임 불러오는 중" hidden></progress>
       <p id="message" role="status" aria-live="polite">소리를 켜고 즐겨 보세요.</p>
@@ -59,6 +59,12 @@ $GODOT_HEAD_INCLUDE
   <script>
     const config = $GODOT_CONFIG;
     const engine = new Engine(config);
+    const canvas = document.getElementById('canvas');
+    canvas.addEventListener('pointerdown', event => {
+      if (event.button === 0 && canvas.setPointerCapture) {
+        canvas.setPointerCapture(event.pointerId);
+      }
+    });
     const start = document.getElementById('start');
     const message = document.getElementById('message');
     const progress = document.getElementById('progress');

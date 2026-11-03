@@ -69,9 +69,9 @@ func run_checks():
 			counts[piece_type - Fruit.Type.BOMB] += 1
 	var total: int = counts[0] + counts[1] + counts[2] + counts[3]
 	print("Rare queue /100000: bomb=", counts[0], " Suan=", counts[1], " Sumin=", counts[2], " Mom=", counts[3])
-	check(total > 850 and total < 1150, "all four rare bubbles share one combined 1% chance")
+	check(total > 1800 and total < 2200, "all four rare bubbles share one combined 2% chance")
 	for count in counts:
-		check(count > 170 and count < 340, "rare roll splits evenly across the four items")
+		check(count > 380 and count < 620, "rare roll splits evenly across the four items")
 	game.specials_enabled = false
 
 	yield(fresh_round(), "completed")
@@ -161,7 +161,7 @@ func run_checks():
 	app = null
 	game = null
 	if failures.empty():
-		print("PASS: combined 1% split, first-face wildcard, final-level cap, five copies, normal merges, wall survival and reset protection")
+		print("PASS: combined 2% split, first-face wildcard, final-level cap, five copies, normal merges, wall survival and reset protection")
 		quit(0)
 	else:
 		quit(1)

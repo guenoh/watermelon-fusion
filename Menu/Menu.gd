@@ -9,6 +9,7 @@ const SCORE_TR := "SCORE"
 
 
 var master_bus_index := AudioServer.get_bus_index("Master")
+var replay_pending := false
 
 onready var in_game := get_node("%InGame")
 onready var in_game_best_score_label := get_node("%InGameBestScoreValue")
@@ -46,12 +47,14 @@ func _ready():
 
 
 func open_in_game(best_score: int = 0):
+	replay_pending = false
 	in_game_best_score_label.text = str(best_score)
 	in_game.show()
 	open()
 
 
 func open_end_game(best_score: int, score: int):
+	replay_pending = false
 	score_value_label.text = str(score)
 	best_score_label.text = str(best_score)
 	
@@ -76,16 +79,20 @@ func open_info():
 
 
 func _on_Menu_closed():
-	if end_game.visible:
-		emit_signal("replay_pressed")
-	
-	
+	var restart: bool = end_game.visible and not replay_pending
 	in_game.hide()
 	info.hide()
 	end_game.hide()
+	if restart:
+		replay_pending = true
+		emit_signal("replay_pressed")
 
 
 func _on_ReplayButton_pressed():
+	if replay_pending:
+		return
+	replay_pending = true
+	end_game.hide()
 	emit_signal("replay_pressed")
 
 
