@@ -16,14 +16,14 @@ func _ready():
 	var font := DynamicFont.new()
 	font.font_data = preload("res://Game/HUD/Fonts/FamilySansKR-Semibold.ttf")
 	font.size = 25
-	for i in range(3):
+	for i in range(4):
 		var button := Button.new()
-		button.text = ["수안 합체", "수민 ×5", "엄마 섞기"][i]
+		button.text = ["수안 합체", "수민 ×5", "엄마 섞기", "왕모자"][i]
 		button.add_font_override("font", font)
-		button.rect_position = Vector2(36 + i * 218, 300)
-		button.rect_size = Vector2(210, 58)
+		button.rect_position = Vector2(30 + i * 166, 300)
+		button.rect_size = Vector2(160, 58)
 		controls.add_child(button)
-		button.connect("pressed", self, "prepare", [[Fruit.Type.SUAN, Fruit.Type.SUMIN, Fruit.Type.MOM][i]])
+		button.connect("pressed", self, "prepare", [[Fruit.Type.SUAN, Fruit.Type.SUMIN, Fruit.Type.MOM, Fruit.Type.WATERMELON][i]])
 	var hint := Label.new()
 	hint.text = "동작 검사 · 선택 후 화면을 눌러 떨어뜨리기"
 	hint.add_font_override("font", font)
@@ -52,7 +52,8 @@ func prepare(piece_type: int):
 	yield(get_tree().create_timer(0.3), "timeout")
 	game.playing = true
 	game.next_fruit_type = Fruit.Type.CHERRY
-	var special = make_piece(piece_type, Vector2.ZERO)
+	var held_type: int = Fruit.Type.MELON if piece_type == Fruit.Type.WATERMELON else piece_type
+	var special = make_piece(held_type, Vector2.ZERO)
 	game.claw.position.x = 0.0
 	game.claw.drop_position_x = 0.0
 	game.claw.load_fruit(special)
@@ -60,6 +61,8 @@ func prepare(piece_type: int):
 	var xs := [0]
 	if piece_type == Fruit.Type.SUMIN:
 		types = [Fruit.Type.STRAWBERRY]
+	elif piece_type == Fruit.Type.WATERMELON:
+		types = [Fruit.Type.MELON]
 	elif piece_type == Fruit.Type.MOM:
 		types = [Fruit.Type.CHERRY, Fruit.Type.STRAWBERRY, Fruit.Type.GRAPES, Fruit.Type.STRAWBERRY, Fruit.Type.CHERRY]
 		xs = [-270, -135, 0, 135, 270]
@@ -68,4 +71,5 @@ func prepare(piece_type: int):
 		face.grow()
 		face.fall(0)
 	yield(get_tree().create_timer(0.9), "timeout")
+	game.get_node("UserInputsController").set_enabled(true)
 	busy = false

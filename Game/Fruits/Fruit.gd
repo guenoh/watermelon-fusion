@@ -34,6 +34,7 @@ const SPECIAL_ATLAS := preload("res://Game/Personal/special-portraits.png")
 const KOREAN_FONT := preload("res://Game/HUD/Fonts/FamilySansKR-Semibold.ttf")
 const MOM_TEXTURE := preload("res://Game/Personal/mom-portrait.png")
 const FACE_CELL_SIZE := 512.0
+const ORIGINAL_ART_RADIUS := 186.0
 const FACE_CELLS := [Vector2(0, 0), Vector2(1, 0), Vector2(2, 0), Vector2(0, 1), Vector2(1, 1)]
 const FACE_ORDER := [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 4]
 const LEVEL_COLORS := [
@@ -52,70 +53,70 @@ const PARAMS := {
 	
 	Type.STRAWBERRY: {
 		"texture": preload("Strawberry.tres"),
-		"radius": 43,
+		"radius": 36,
 		"points": 4,
 		"color": Color("#e61f26"),
 	},
 	
 	Type.GRAPES: {
 		"texture": preload("Grapes.tres"),
-		"radius": 59,
+		"radius": 46,
 		"points": 6,
 		"color": Color("#ac74b1"),
 	},
 	
 	Type.LEMON: {
 		"texture": preload("Lemon.tres"),
-		"radius": 75,
+		"radius": 56,
 		"points": 8,
 		"color": Color("#fdd504"),
 	},
 	
 	Type.ORANGE: {
 		"texture": preload("Orange.tres"),
-		"radius": 91,
+		"radius": 66,
 		"points": 10,
 		"color": Color("#fdd504"),
 	},
 	
 	Type.APPLE: {
 		"texture": preload("Apple.tres"),
-		"radius": 107,
+		"radius": 76,
 		"points": 12,
 		"color": Color("#aad641"),
 	},
 
 	Type.PEAR: {
 		"texture": preload("Pear.tres"),
-		"radius": 123,
+		"radius": 86,
 		"points": 14,
 		"color": Color("#e1d600"),
 	},
 
 	Type.PEACH: {
 		"texture": preload("Peach.tres"),
-		"radius": 138,
+		"radius": 96,
 		"points": 16,
 		"color": Color("#fead78"),
 	},
 	
 	Type.PINEAPPLE: {
 		"texture": preload("Pineapple.tres"),
-		"radius": 154,
+		"radius": 106,
 		"points": 18,
 		"color": Color("#ffd437"),
 	},
 	
 	Type.MELON: {
 		"texture": preload("Melon.tres"),
-		"radius": 171,
+		"radius": 116,
 		"points": 20,
 		"color": Color("#8fd165"),
 	},
 	
 	Type.WATERMELON: {
 		"texture": preload("Watermelon.tres"),
-		"radius": 186,
+		"radius": 126,
 		"points": 22,
 		"color": Color("#82bd54"),
 	},
@@ -218,7 +219,7 @@ func set_type(p_type):
 	var params = PARAMS.get(type, PARAMS[Type.CHERRY])
 	radius = params.get("radius", radius)
 	points = params.get("points", points)
-	face_ratio = float(radius/PARAMS[Type.WATERMELON].radius)
+	face_ratio = radius / ORIGINAL_ART_RADIUS
 	
 	mass = float(radius) #/PARAMS[Type.CHERRY].radius)
 	

@@ -102,6 +102,25 @@ func run_checks():
 		if not piece.deleting and not piece.popping and piece.type == Fruit.Type.STRAWBERRY:
 			merged_faces += 1
 	check(merged_faces == 1 and game.score == 4, "ordinary faces still merge once with their usual score: score=" + str(game.score) + " merged=" + str(merged_faces))
+	game.reset()
+	yield(create_timer(0.2), "timeout")
+	game.playing = true
+	var penultimate_radius: float = Fruit.PARAMS[Fruit.Type.MELON].radius
+	face_a = make_piece(Fruit.Type.MELON, Vector2(0, -penultimate_radius))
+	face_b = make_piece(Fruit.Type.MELON, Vector2(0, -penultimate_radius * 3.0 - 30.0))
+	yield(create_timer(0.3), "timeout")
+	face_a.fall(800)
+	face_b.fall(800)
+	yield(create_timer(1.2), "timeout")
+	var final_faces := 0
+	for piece in game.fruits.get_children():
+		if piece.deleting or piece.popping or piece.type != Fruit.Type.WATERMELON:
+			continue
+		final_faces += 1
+		check(piece.level_badge.text == "11", "normal merge reaches the eleventh face level")
+		check(piece.sprite.texture.region == Rect2(512, 512, 512, 512), "final face uses the supplied traditional-hat portrait cell")
+		check(piece.radius * 4.0 + 20.0 < game.claw.half_width * 2.0, "two final faces have room to sit side by side")
+	check(final_faces == 1, "two penultimate faces produce one final hat face")
 	app.queue_free()
 	yield(create_timer(0.15), "timeout")
 	app = null

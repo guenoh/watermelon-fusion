@@ -20,6 +20,10 @@ This is a noncommercial family-play fork.
 Faces use low contact friction and a gentle sideways correction only when two
 different levels balance almost exactly center-on-center, so repeated centered
 drops roll into a pile instead of freezing into a vertical tower.
+Normal face radii grow from 26 to 126 pixels in 10-pixel steps. The final
+hat portrait is level 11 and has a 252-pixel diameter, leaving room for two
+final faces side by side within the 720-pixel box. This gentler size progression
+gives a family round more room before reaching the danger line.
 
 Faces occasionally speak Korean family messages in a floating bubble. Each new
 queued piece independently has a **combined 2%** chance to be a rare bubble.
