@@ -9,6 +9,7 @@
 [ext_resource path="res://Game/Fruits/pop.mp3" type="AudioStream" id=7]
 
 [sub_resource type="PhysicsMaterial" id=9]
+friction = 0.2
 bounce = 0.01
 
 [sub_resource type="Animation" id=10]

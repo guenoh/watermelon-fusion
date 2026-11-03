@@ -337,6 +337,22 @@ func _physics_process(delta):
 
 
 func _integrate_forces(state: Physics2DDirectBodyState):
+	# Perfectly centered circles have no sideways collision force. Break only
+	# that unstable balance, then let gravity and friction handle the roll.
+	for contact in range(state.get_contact_count()):
+		var support = state.get_contact_collider_object(contact)
+		if not is_instance_valid(support) or support.get_script() != get_script():
+			continue
+		if support.type == type or support.mode != MODE_RIGID or support.deleting or support.popping:
+			continue
+		var offset: Vector2 = state.transform.origin - support.global_position
+		var balance_tolerance: float = max(2.0, radius * 0.03)
+		if offset.y < 0.0 and abs(offset.x) < balance_tolerance and abs(state.linear_velocity.x) < 4.0:
+			var direction := sign(offset.x)
+			if direction == 0.0:
+				direction = -1.0 if get_instance_id() % 2 == 0 else 1.0
+			state.linear_velocity.x = direction * max(12.0, radius * 0.2)
+			break
 	falling = bool(state.linear_velocity.y > FALLING_VELOCITY_THRESHOLD)
 	crushed = bool(state.get_contact_count() >= CRUSHED_CONTACT_THRESHOLD)
 	rolling = bool(abs(state.angular_velocity) > ROLLING_VOLOCITY_THRESHOLD)

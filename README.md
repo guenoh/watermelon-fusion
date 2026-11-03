@@ -13,6 +13,10 @@ position. A quick tap or click drops at the current aim position. The next ball
 keeps that position. The best score is saved in the current browser; clearing
 browser storage removes it. This is a noncommercial family-play fork.
 
+Faces use low contact friction and a gentle sideways correction only when two
+different levels balance almost exactly center-on-center, so repeated centered
+drops roll into a pile instead of freezing into a vertical tower.
+
 Faces occasionally speak Korean family messages in a floating bubble. Each new
 queued piece independently has a 1% chance to be a heart bomb instead of a face;
 there is no guaranteed starting bomb or separate inventory button. Drag and drop

@@ -52,7 +52,8 @@ jobs:
           timeout 120s xvfb-run -a .godot-tools/godot --audio-driver Dummy --path . --export Web "build/web/$web_name.html" 2>&1 | tee "$RUNNER_TEMP/export.log"
           timeout 30s xvfb-run -a .godot-tools/godot --audio-driver Dummy --path . --script tests/drag_controls.gd 2>&1 | tee "$RUNNER_TEMP/controls.log"
           timeout 30s xvfb-run -a .godot-tools/godot --audio-driver Dummy --path . --script tests/family_bombs.gd 2>&1 | tee "$RUNNER_TEMP/family.log"
-          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' "$RUNNER_TEMP/controls.log" "$RUNNER_TEMP/family.log" "$RUNNER_TEMP/export.log"; then
+          timeout 30s xvfb-run -a .godot-tools/godot --audio-driver Dummy --path . --script tests/rolling_physics.gd 2>&1 | tee "$RUNNER_TEMP/rolling.log"
+          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' "$RUNNER_TEMP/controls.log" "$RUNNER_TEMP/family.log" "$RUNNER_TEMP/rolling.log" "$RUNNER_TEMP/export.log"; then
             exit 1
           fi
           mv "build/web/$web_name.html" build/web/index.html
