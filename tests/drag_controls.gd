@@ -55,39 +55,53 @@ func run_checks():
 		return
 
 	var held = claw.current_fruit
-	touch(0, true)
-	drag(150)
-	yield(create_timer(0.1), "timeout")
-	check(abs(held.global_position.x - 150) < 2.0, "held ball follows drag before release")
+	var origin_x: float = held.global_position.x
+	touch(210, true)
+	yield(create_timer(0.06), "timeout")
+	check(abs(held.global_position.x - origin_x) < 0.1, "pressing away from the ball does not teleport it")
+	drag(310)
+	yield(create_timer(0.04), "timeout")
+	check(held.global_position.x > origin_x and held.global_position.x < origin_x + 99.0, "ball follows progressively instead of jumping to the drag target")
+	yield(create_timer(0.3), "timeout")
+	check(abs(held.global_position.x - (origin_x + 100.0)) < 2.0, "drag preserves the initial grab offset")
 	check(drops == 0 and claw.current_fruit == held, "pressing and dragging do not drop")
 
 	touch(-150, true, 1)
 	drag(-150, 1)
 	touch(-150, false, 1)
 	yield(create_timer(0.08), "timeout")
-	check(drops == 0 and abs(held.global_position.x - 150) < 2.0, "second finger cannot move or release the ball")
+	check(drops == 0 and abs(held.global_position.x - (origin_x + 100.0)) < 2.0, "second finger cannot move or release the ball")
 
 	drag(10000)
-	yield(create_timer(0.08), "timeout")
+	yield(create_timer(0.3), "timeout")
 	check(held.global_position.x <= claw.half_width - held.radius, "right wall clamps the whole ball")
 	check(drops == 0, "touching a wall while holding does not drop")
 	drag(-10000)
-	yield(create_timer(0.08), "timeout")
+	yield(create_timer(0.5), "timeout")
 	check(held.global_position.x >= -claw.half_width + held.radius, "left wall clamps the whole ball")
 
-	touch(-140, false)
+	drag(270)
+	yield(create_timer(0.04), "timeout")
+	var release_x: float = held.global_position.x
+	touch(1000, false)
 	yield(create_timer(0.08), "timeout")
 	check(drops == 1 and held.mode == RigidBody2D.MODE_RIGID, "release drops exactly once")
-	check(abs(held.global_position.x + 140) < 2.0, "release uses the final pointer position")
+	check(abs(held.global_position.x - release_x) < 2.0, "release drops from the visible ball position without a final snap")
 	yield(create_timer(0.8), "timeout")
-	check(claw.armed and abs(claw.current_fruit.global_position.x + 140) < 2.0, "next ball keeps the previous aim")
+	check(claw.armed and abs(claw.current_fruit.global_position.x - release_x) < 2.0, "next ball keeps the previous visible aim position")
 
 	touch(100, true)
+	drag(200)
+	yield(create_timer(0.04), "timeout")
 	controller._notification(MainLoop.NOTIFICATION_WM_FOCUS_OUT)
+	var cancelled_x: float = claw.current_fruit.global_position.x
 	touch(100, false)
-	yield(create_timer(0.08), "timeout")
+	yield(create_timer(0.12), "timeout")
 	check(drops == 1, "losing focus cancels rather than drops a gesture")
+	check(abs(claw.current_fruit.global_position.x - cancelled_x) < 0.1, "cancelling stops the trailing movement")
 	touch(80, true)
+	drag(130)
+	yield(create_timer(0.04), "timeout")
 	game._on_MenuButton_pressed()
 	touch(80, false)
 	yield(create_timer(0.08), "timeout")
@@ -95,10 +109,13 @@ func run_checks():
 	app.get_node("Menus/Menu").close()
 	yield(create_timer(0.35), "timeout")
 
-	touch(80, true)
-	touch(80, false)
+	var tap_ball = claw.current_fruit
+	var tap_x: float = tap_ball.global_position.x
+	touch(250, true)
+	touch(250, false)
 	yield(create_timer(0.08), "timeout")
 	check(drops == 2, "quick taps still drop one ball")
+	check(abs(tap_ball.global_position.x - tap_x) < 2.0, "tap does not teleport the ball to the pressed position")
 	app.queue_free()
 	yield(create_timer(0.1), "timeout")
 	app = null
@@ -106,9 +123,10 @@ func run_checks():
 	controller = null
 	claw = null
 	held = null
+	tap_ball = null
 
 	if failures.empty():
-		print("PASS: drag follows pointer, waits for release, clamps at walls, ignores extra fingers, cancels safely, and supports taps")
+		print("PASS: no press teleport, smooth relative dragging, release at visible position, wall limits, multi-touch, cancellation, and taps")
 		quit(0)
 	else:
 		quit(1)

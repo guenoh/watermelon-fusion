@@ -6,6 +6,8 @@ signal dropped
 
 const FRUIT_DROP_IMPULSE := 800
 const ARM_DURATION := 0.5 # sec
+const AIM_FOLLOW_RATE := 18.0
+const MAX_AIM_SPEED := 1800.0
 
 
 var loaded := false
@@ -15,6 +17,8 @@ var arming := false
 var drop_position_x := 0.0
 var half_width := 360.0
 var user_dropped := false
+var dragging := false
+var grab_offset_x := 0.0
 
 var next_fruit: Fruit
 var current_fruit: Fruit
@@ -45,6 +49,7 @@ func unload():
 	loaded = false
 	armed = false
 	arming = false
+	dragging = false
 	
 	user_dropped = false
 	current_fruit = null
@@ -84,32 +89,53 @@ func set_horizontal_bounds(width: float):
 
 
 func _on_UserInputsController_fruit_moved(pos_x):
-	if not user_dropped:
-		drop_position_x = pos_x
+	if dragging and not user_dropped:
+		drop_position_x = pos_x + grab_offset_x
+
+
+func _on_UserInputsController_fruit_grabbed(pos_x):
+	if user_dropped:
+		return
+	dragging = true
+	grab_offset_x = position.x - pos_x
+	drop_position_x = position.x
+
+
+func _on_UserInputsController_drag_cancelled():
+	dragging = false
+	drop_position_x = position.x
 
 
 func _physics_process(delta):
 	if not armed or not is_instance_valid(current_fruit):
 		return
+	if user_dropped:
+		# Release from the position actually shown, without snapping to the
+		# pointer or waiting for a trailing ball to finish catching up.
+		drop()
+		return
+	if not dragging:
+		return
 
-	# Hitting a wall while aiming stops horizontal movement. Only releasing
-	# the gesture drops the ball, after applying its final pointer position.
+	# A frame-rate-independent follow keeps small movements responsive and
+	# limits large jumps when a pointer moves quickly across the playfield.
 	var limit := max(0.0, half_width - current_fruit.radius - 2.0)
 	var target_x := clamp(drop_position_x, -limit, limit)
-	move_and_collide(Vector2(target_x - position.x, 0.0))
+	var follow := 1.0 - exp(-AIM_FOLLOW_RATE * delta)
+	var step := clamp((target_x - position.x) * follow, -MAX_AIM_SPEED * delta, MAX_AIM_SPEED * delta)
+	move_and_collide(Vector2(step, 0.0))
 	current_fruit.global_position = global_position
-	if user_dropped:
-		drop()
 
 
-func _on_UserInputsController_fruit_dropped(pos_x):
+func _on_UserInputsController_fruit_dropped(_pos_x):
 	if not armed:
 		return
 	
 	if user_dropped:
 		return
 	
-	drop_position_x = pos_x
+	dragging = false
+	drop_position_x = position.x
 	user_dropped = true
 
 
@@ -124,6 +150,8 @@ func drop():
 	
 	armed = false
 	user_dropped = false
+	dragging = false
+	drop_position_x = position.x
 	
 	if not armed and loaded:
 		arm()

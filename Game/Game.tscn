@@ -147,6 +147,8 @@ current = true
 [connection signal="timeout" from="MultiplicatorTimer" to="." method="_on_MultiplicatorTimer_timeout"]
 [connection signal="pressed" from="Foreground/SafeArea/MarginContainer/HBoxContainer/MenuButton" to="." method="_on_MenuButton_pressed"]
 [connection signal="fruit_dropped" from="UserInputsController" to="Claw" method="_on_UserInputsController_fruit_dropped"]
+[connection signal="fruit_grabbed" from="UserInputsController" to="Claw" method="_on_UserInputsController_fruit_grabbed"]
+[connection signal="drag_cancelled" from="UserInputsController" to="Claw" method="_on_UserInputsController_drag_cancelled"]
 [connection signal="fruit_moved" from="UserInputsController" to="Claw" method="_on_UserInputsController_fruit_moved"]
 [connection signal="armed" from="Claw" to="." method="_on_Claw_armed"]
 [connection signal="limit_reached" from="Box" to="." method="_on_Box_limit_reached"]
