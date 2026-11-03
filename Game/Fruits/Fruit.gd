@@ -3,6 +3,7 @@ class_name Fruit
 
 
 signal fusionned(fruit)
+signal bomb_triggered(bomb)
 
 
 enum Type {
@@ -17,11 +18,13 @@ enum Type {
 	PINEAPPLE,
 	MELON,
 	WATERMELON,
+	BOMB,
 }
 
 const SCENE := "Fruit.tscn"
 const FACE_ATLAS := preload("res://Game/Personal/face-atlas.png")
 const FACE_FONT := preload("res://Menu/Theme/LilitaOne-Regular-NotoSans-Black.ttf")
+const BOMB_TEXTURE := preload("res://Game/Fruits/bomb.svg")
 const FACE_CELL_SIZE := 512.0
 const FACE_CELLS := [Vector2(0, 0), Vector2(1, 0), Vector2(2, 0), Vector2(0, 1), Vector2(1, 1)]
 const FACE_ORDER := [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 4]
@@ -108,6 +111,12 @@ const PARAMS := {
 		"points": 22,
 		"color": Color("#82bd54"),
 	},
+	Type.BOMB: {
+		"texture": BOMB_TEXTURE,
+		"radius": 50,
+		"points": 0,
+		"color": Color("#ff91b5"),
+	},
 }
 
 const FACES := [
@@ -139,6 +148,8 @@ var crushed := false
 var in_danger := false setget set_in_danger
 
 var deleting := false
+var popping := false
+var blast_requested := false
 var delete_pos := Vector2.ZERO
 var deleting_speed := 1000
 var visual_size := 0.0
@@ -163,9 +174,11 @@ static func get_evolution_type_of(p_type: int) -> int:
 
 
 static func get_texture(p_type: int) -> Texture:
+	if p_type == Type.BOMB:
+		return BOMB_TEXTURE
 	var portrait := AtlasTexture.new()
 	portrait.atlas = FACE_ATLAS
-	var cell: Vector2 = FACE_CELLS[FACE_ORDER[int(clamp(p_type, 0, len(Type) - 1))]]
+	var cell: Vector2 = FACE_CELLS[FACE_ORDER[int(clamp(p_type, 0, len(FACE_ORDER) - 1))]]
 	portrait.region = Rect2(cell * FACE_CELL_SIZE, Vector2.ONE * FACE_CELL_SIZE)
 	portrait.filter_clip = true
 	return portrait
@@ -186,7 +199,7 @@ func set_type(p_type):
 	
 	sprite.texture = get_texture(type)
 	level_font.size = int(max(16.0, radius * 0.23))
-	level_badge.text = str(type + 1)
+	level_badge.text = "" if type == Type.BOMB else str(type + 1)
 	level_badge.rect_size = Vector2.ONE * radius * 0.42
 	
 	var shape := CircleShape2D.new()
@@ -246,7 +259,7 @@ func _draw():
 	if visual_size <= 0.0:
 		return
 	var r := radius * visual_size
-	var level_color: Color = LEVEL_COLORS[type]
+	var level_color: Color = Color("#ff91b5") if type == Type.BOMB else LEVEL_COLORS[type]
 	draw_circle(Vector2.ZERO, r, level_color.lightened(0.62))
 	draw_arc(Vector2.ZERO, r - max(1.0, r * 0.045), 0.0, TAU, 80,
 		level_color, max(2.0, r * 0.09), true)
@@ -280,6 +293,9 @@ func _on_invincibility_timeout():
 
 
 func pop():
+	if popping or deleting:
+		return
+	popping = true
 	contacts_reported = 0
 	set_deferred("contact_monitor", false)
 	set_deferred("mode", MODE_KINEMATIC)
@@ -327,11 +343,19 @@ func _integrate_forces(state: Physics2DDirectBodyState):
 
 
 func _on_body_entered(body):
-	
+	if deleting or popping:
+		return
+	if type == Type.BOMB:
+		if mode == MODE_RIGID and not blast_requested:
+			blast_requested = true
+			emit_signal("bomb_triggered", self)
+		return
 	if body.get_script() != get_script():
 		return
 	
 	if body.type != type:
+		return
+	if body.deleting or body.popping or body.fusionned:
 		return
 	
 	if body.name > name: # only one body raise the collision
