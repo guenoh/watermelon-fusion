@@ -6,6 +6,7 @@ signal fusionned(fruit)
 signal bomb_triggered(bomb)
 signal special_triggered(special, target)
 signal remix_triggered(mom)
+signal dad_dropped(dad)
 
 
 enum Type {
@@ -24,6 +25,7 @@ enum Type {
 	SUAN,
 	SUMIN,
 	MOM,
+	DAD,
 }
 
 const SCENE := "Fruit.tscn"
@@ -33,6 +35,7 @@ const BOMB_TEXTURE := preload("res://Game/Fruits/bomb.svg")
 const SPECIAL_ATLAS := preload("res://Game/Personal/special-portraits.png")
 const KOREAN_FONT := preload("res://Game/HUD/Fonts/FamilySansKR-Semibold.ttf")
 const MOM_TEXTURE := preload("res://Game/Personal/mom-portrait.png")
+const DAD_TEXTURE := preload("res://Game/Personal/dad-portrait.png")
 const FACE_CELL_SIZE := 512.0
 const ORIGINAL_ART_RADIUS := 186.0
 const FACE_CELLS := [Vector2(0, 0), Vector2(1, 0), Vector2(2, 0), Vector2(0, 1), Vector2(1, 1)]
@@ -129,6 +132,7 @@ const PARAMS := {
 	Type.SUAN: {"radius": 64, "points": 0, "color": Color("#53c9ed")},
 	Type.SUMIN: {"radius": 64, "points": 0, "color": Color("#f487c1")},
 	Type.MOM: {"radius": 64, "points": 0, "color": Color("#ffbe55")},
+	Type.DAD: {"radius": 64, "points": 0, "color": Color("#60b7a4")},
 }
 
 const FACES := [
@@ -166,6 +170,8 @@ var special_requested := false
 var merge_delay := 0.0
 var remix_requested := false
 var remix_floor_y := 0.0
+var dad_drop_requested := false
+var dad_smash_used := false
 var delete_pos := Vector2.ZERO
 var deleting_speed := 1000
 var visual_size := 0.0
@@ -198,6 +204,8 @@ static func get_texture(p_type: int) -> Texture:
 		return BOMB_TEXTURE
 	if p_type == Type.MOM:
 		return MOM_TEXTURE
+	if p_type == Type.DAD:
+		return DAD_TEXTURE
 	if p_type == Type.SUAN or p_type == Type.SUMIN:
 		var special_portrait := AtlasTexture.new()
 		special_portrait.atlas = SPECIAL_ATLAS
@@ -233,7 +241,7 @@ func set_type(p_type):
 	level_font.font_data = KOREAN_FONT if type >= Type.SUAN else FACE_FONT
 	if type >= Type.SUAN:
 		level_font.size = 24
-		level_badge.text = {Type.SUAN: "수안", Type.SUMIN: "수민 ×5", Type.MOM: "엄마"}[type]
+		level_badge.text = {Type.SUAN: "수안", Type.SUMIN: "수민 ×5", Type.MOM: "엄마", Type.DAD: "아빠"}[type]
 		level_badge.rect_size = Vector2(radius * 1.8, 30)
 	
 	var shape := CircleShape2D.new()
@@ -325,6 +333,9 @@ func fall(impulse: int = 1):
 		collision_mask = 2
 	apply_central_impulse(mass * impulse * Vector2.DOWN) # small impulse to feel gravity again
 	invincibility_timer.start()
+	if type == Type.DAD and not dad_drop_requested:
+		dad_drop_requested = true
+		emit_signal("dad_dropped", self)
 
 
 func _on_invincibility_timeout():
@@ -421,6 +432,8 @@ func _on_body_entered(body):
 		return
 	if type == Type.MOM:
 		return # The floor contact is checked even if a wall was touched first.
+	if type == Type.DAD:
+		return # The one-time drop sweep is over; dad remains an ordinary obstacle.
 	if type == Type.BOMB:
 		if mode == MODE_RIGID and not blast_requested:
 			blast_requested = true

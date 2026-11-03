@@ -28,8 +28,9 @@ gives a family round more room before reaching the danger line.
 Faces occasionally speak Korean family messages in a floating bubble. Each new
 queued piece independently has a **combined 2%** chance to be a rare bubble.
 That roll chooses equally between the heart bomb, **수안** (blue), **수민 ×5**
-(pink), and **엄마** (gold), so each type has a 1/200 overall chance. There is no guaranteed starting
-item or separate inventory button; all four use the usual drag and drop.
+(pink), **엄마** (gold), and **아빠** (green), so each type has a 1/250 overall chance.
+There is no guaranteed starting item or separate inventory button; all five use
+the usual drag and drop.
 
 The bomb clears nearby dropped pieces on its first contact with a face or the
 box, awards their points, and protects held/preview pieces. Suan combines with
@@ -51,6 +52,14 @@ held and preview pieces remain protected. Game over requires the same dropped
 ball to remain settled above the line continuously for 3.1 seconds. Flying balls,
 previews and removed balls do not count, and returning below the line clears the
 warning immediately. Restarts clear the previous round's warning state.
+
+Dad clears every already-dropped ball whose center is below his release position,
+across the entire box width, and awards their points once. Above balls and the
+held/preview queue are protected. Dad remains as a physical ball after reaching
+the floor: he does not merge or keep destroying later balls. A separate timer
+occasionally gives the settled dad “꿀꿀~” and “시우야 안녕!” speech bubbles. The
+one-time sweep cannot reactivate when he moves again; other items can still move
+or remove him. Restart clears his chatter and any pending sweep.
 
 Korean text uses a renamed subset of Noto Sans KR under the SIL Open Font License;
 see `Game/HUD/Fonts/OFL.txt`.

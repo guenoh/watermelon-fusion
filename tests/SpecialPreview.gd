@@ -16,14 +16,14 @@ func _ready():
 	var font := DynamicFont.new()
 	font.font_data = preload("res://Game/HUD/Fonts/FamilySansKR-Semibold.ttf")
 	font.size = 25
-	for i in range(4):
+	for i in range(5):
 		var button := Button.new()
-		button.text = ["수안 합체", "수민 ×5", "엄마 섞기", "왕모자"][i]
+		button.text = ["수안", "수민 ×5", "엄마", "왕모자", "아빠"][i]
 		button.add_font_override("font", font)
-		button.rect_position = Vector2(30 + i * 166, 300)
-		button.rect_size = Vector2(160, 58)
+		button.rect_position = Vector2(30 + i * 132, 300)
+		button.rect_size = Vector2(126, 58)
 		controls.add_child(button)
-		button.connect("pressed", self, "prepare", [[Fruit.Type.SUAN, Fruit.Type.SUMIN, Fruit.Type.MOM, Fruit.Type.WATERMELON][i]])
+		button.connect("pressed", self, "prepare", [[Fruit.Type.SUAN, Fruit.Type.SUMIN, Fruit.Type.MOM, Fruit.Type.WATERMELON, Fruit.Type.DAD][i]])
 	var hint := Label.new()
 	hint.text = "동작 검사 · 선택 후 화면을 눌러 떨어뜨리기"
 	hint.add_font_override("font", font)
@@ -63,7 +63,7 @@ func prepare(piece_type: int):
 		types = [Fruit.Type.STRAWBERRY]
 	elif piece_type == Fruit.Type.WATERMELON:
 		types = [Fruit.Type.MELON]
-	elif piece_type == Fruit.Type.MOM:
+	elif piece_type == Fruit.Type.MOM or piece_type == Fruit.Type.DAD:
 		types = [Fruit.Type.CHERRY, Fruit.Type.STRAWBERRY, Fruit.Type.GRAPES, Fruit.Type.STRAWBERRY, Fruit.Type.CHERRY]
 		xs = [-270, -135, 0, 135, 270]
 	for i in range(types.size()):

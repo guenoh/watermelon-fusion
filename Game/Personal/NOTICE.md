@@ -1,6 +1,6 @@
 # Personal portrait artwork
 
-`face-atlas.png`, `special-portraits.png`, and `mom-portrait.png` are personal
+`face-atlas.png`, `special-portraits.png`, `mom-portrait.png`, and `dad-portrait.png` are personal
 family artwork prepared from photos supplied by the
 owner of this fork. The owner approved its publication for this family game.
 It is separate from the original Watermelon Fusion assets and is not offered
@@ -22,3 +22,9 @@ Mom portrait edit prompt (built-in image tool): preserve the supplied woman's
 photographic face, expression, identity and brown hair; isolate her complete head
 from the café and clothing on a transparent square with padding; add no text,
 rings, decorations or beautification.
+
+Dad portrait edit prompt (built-in image tool): preserve the supplied man's
+photographic identity, expression, head angle, skin texture and dark wavy hair;
+retain full hair, ears, face and chin; remove the rink, hockey equipment, clothing
+and body; center the head on an actually transparent square with padding, without
+clipping, beautification, illustration, words, rings or decorations.

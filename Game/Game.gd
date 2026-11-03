@@ -21,7 +21,8 @@ const FRUIT_FALL_FUSION_IMPULSE := 500
 
 const MULTIPLICATOR_MAX := 8
 const SPECIAL_CHANCE := 0.02
-const SPECIAL_TYPES := [Fruit.Type.BOMB, Fruit.Type.SUAN, Fruit.Type.SUMIN, Fruit.Type.MOM]
+const SPECIAL_TYPES := [Fruit.Type.BOMB, Fruit.Type.SUAN, Fruit.Type.SUMIN, Fruit.Type.MOM, Fruit.Type.DAD]
+const DAD_MESSAGES := ["꿀꿀~", "시우야 안녕!"]
 const COPY_COUNT := 5
 const COPY_MERGE_DELAY := 1.25
 const REMIX_DANGER_GRACE := 8.0
@@ -51,8 +52,10 @@ var specials_enabled := true
 var special_rng := RandomNumberGenerator.new()
 var speech_rng := RandomNumberGenerator.new()
 var speech_timer := Timer.new()
+var dad_speech_timer := Timer.new()
 var family_speech = Speech.new()
 var message_cursor := 0
+var dad_message_cursor := 0
 var round_id := 0
 
 
@@ -72,6 +75,9 @@ func _ready():
 	speech_timer.one_shot = true
 	speech_timer.connect("timeout", self, "_on_speech_timeout")
 	add_child(speech_timer)
+	dad_speech_timer.one_shot = true
+	dad_speech_timer.connect("timeout", self, "_on_dad_speech_timeout")
+	add_child(dad_speech_timer)
 	foreground.add_child(family_speech)
 
 
@@ -163,6 +169,8 @@ func _on_Claw_armed():
 				family_speech.say("수민이 등장!\n처음 닿은 얼굴이 5개!", claw.current_fruit)
 			Fruit.Type.MOM:
 				family_speech.say("엄마 왔다!\n바닥까지 쭉~", claw.current_fruit)
+			Fruit.Type.DAD:
+				family_speech.say("아빠 등장!\n아래 공들은 비켜~", claw.current_fruit)
 	load_claw()
 
 
@@ -171,6 +179,7 @@ func _connect_piece(fruit):
 	fruit.connect("bomb_triggered", self, "_on_bomb_triggered")
 	fruit.connect("special_triggered", self, "_on_special_triggered")
 	fruit.connect("remix_triggered", self, "_on_remix_triggered")
+	fruit.connect("dad_dropped", self, "_on_dad_dropped")
 	fruit.remix_floor_y = box.global_position.y
 
 
@@ -223,6 +232,7 @@ func start():
 	box.set_monitoring_enabled(true)
 	$UserInputsController.set_enabled(true)
 	message_cursor = 0
+	dad_message_cursor = 0
 	speech_timer.start(2.2)
 	self.next_fruit_type = roll_next_fruit()
 	load_claw()
@@ -238,6 +248,7 @@ func end():
 	box.set_monitoring_enabled(false)
 	$UserInputsController.set_enabled(false)
 	speech_timer.stop()
+	dad_speech_timer.stop()
 	family_speech.clear()
 	$UserInputsController.cancel_drag()
 	claw.unload()
@@ -288,6 +299,8 @@ func reset():
 	box.set_monitoring_enabled(false)
 	$UserInputsController.set_enabled(false)
 	speech_timer.stop()
+	dad_speech_timer.stop()
+	dad_message_cursor = 0
 	family_speech.clear()
 	$UserInputsController.cancel_drag()
 	self.score = 0
@@ -305,16 +318,67 @@ func reset():
 func _on_speech_timeout():
 	if not playing:
 		return
+	if family_speech.visible:
+		speech_timer.start(2.0)
+		return
 	var speaker = claw.current_fruit
+	if is_instance_valid(speaker) and speaker.type == Fruit.Type.DAD:
+		speech_timer.start(2.0)
+		return
 	if not is_instance_valid(speaker):
 		for fruit in fruits.get_children():
-			if not fruit.deleting and not fruit.popping and fruit.type != Fruit.Type.BOMB:
+			if not fruit.deleting and not fruit.popping and fruit.type != Fruit.Type.BOMB and fruit.type != Fruit.Type.DAD:
 				speaker = fruit
 				break
 	if is_instance_valid(speaker):
 		family_speech.say(FAMILY_MESSAGES[message_cursor % len(FAMILY_MESSAGES)], speaker)
 		message_cursor += 1
 	speech_timer.start(speech_rng.randf_range(7.0, 11.0))
+
+
+func _on_dad_dropped(dad):
+	call_deferred("_clear_below_dad", dad, round_id)
+
+
+func _clear_below_dad(dad, source_round: int):
+	if not playing or source_round != round_id or not is_instance_valid(dad) or dad.deleting or dad.popping or dad.dad_smash_used:
+		return
+	dad.dad_smash_used = true
+	var center: Vector2 = dad.global_position
+	for fruit in fruits.get_children():
+		if fruit == dad or fruit == claw.current_fruit or fruit == claw.next_fruit:
+			continue
+		if fruit.mode != RigidBody2D.MODE_RIGID or fruit.deleting or fruit.popping:
+			continue
+		if fruit.global_position.y > center.y:
+			self.score += fruit.points
+			fruit.fusionned = true
+			fruit.pop()
+	var burst = BombBurst.new()
+	burst.caption = "쿵!"
+	burst.sound_pitch = 0.75
+	burst.blast_radius = claw.half_width * 1.5
+	add_child(burst)
+	burst.global_position = center
+	dad_speech_timer.start(2.0)
+
+
+func _on_dad_speech_timeout():
+	if not playing:
+		return
+	var dads := []
+	for fruit in fruits.get_children():
+		if fruit.type == Fruit.Type.DAD and fruit.dad_smash_used and fruit.mode == RigidBody2D.MODE_RIGID and not fruit.deleting and not fruit.popping:
+			dads.append(fruit)
+	if dads.empty():
+		return
+	var speaker = dads[dad_message_cursor % dads.size()]
+	if family_speech.visible or speaker.linear_velocity.length_squared() > 3600.0:
+		dad_speech_timer.start(1.0)
+		return
+	family_speech.say(DAD_MESSAGES[dad_message_cursor % DAD_MESSAGES.size()], speaker)
+	dad_message_cursor += 1
+	dad_speech_timer.start(speech_rng.randf_range(5.0, 8.0))
 
 
 func _on_bomb_triggered(bomb):

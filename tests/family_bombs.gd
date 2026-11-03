@@ -55,11 +55,11 @@ func run_checks():
 		var expected := expected_rng.randf() < 0.02
 		var expected_type := -1
 		if expected:
-			expected_type = game.SPECIAL_TYPES[expected_rng.randi_range(0, 3)]
+			expected_type = game.SPECIAL_TYPES[expected_rng.randi_range(0, game.SPECIAL_TYPES.size() - 1)]
 		var actual_type: int = game.roll_next_fruit()
 		check(Fruit.is_special_type(actual_type) == expected, "piece queue applies one combined independent 2% roll per piece")
 		if expected:
-			check(actual_type == expected_type, "one of the four rare types is chosen only after a rare roll")
+			check(actual_type == expected_type, "one of the five rare types is chosen only after a rare roll")
 	game.specials_enabled = false
 	game.family_speech.say("박근오 아빠,\n사랑해요!", game.claw.current_fruit)
 	yield(create_timer(0.1), "timeout")

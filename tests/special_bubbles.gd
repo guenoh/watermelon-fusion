@@ -62,16 +62,16 @@ func run_checks():
 	# a lucky roll during the short interactive checks.
 	game.special_rng.seed = 24680
 	game.specials_enabled = true
-	var counts := [0, 0, 0, 0]
+	var counts := [0, 0, 0, 0, 0]
 	for _i in range(100000):
 		var piece_type: int = game.roll_next_fruit()
 		if Fruit.is_special_type(piece_type):
 			counts[piece_type - Fruit.Type.BOMB] += 1
-	var total: int = counts[0] + counts[1] + counts[2] + counts[3]
-	print("Rare queue /100000: bomb=", counts[0], " Suan=", counts[1], " Sumin=", counts[2], " Mom=", counts[3])
-	check(total > 1800 and total < 2200, "all four rare bubbles share one combined 2% chance")
+	var total: int = counts[0] + counts[1] + counts[2] + counts[3] + counts[4]
+	print("Rare queue /100000 [bomb, Suan, Sumin, mom, dad]: ", counts)
+	check(total > 1800 and total < 2200, "all five rare bubbles share one combined 2% chance")
 	for count in counts:
-		check(count > 380 and count < 620, "rare roll splits evenly across the four items")
+		check(count > 280 and count < 520, "rare roll splits evenly across the five items")
 	game.specials_enabled = false
 
 	yield(fresh_round(), "completed")
